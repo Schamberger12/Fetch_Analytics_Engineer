@@ -1,0 +1,124 @@
+All SQL statements are using Microsoft SQL Server
+
+***************************************************************************
+Question 1:																  *
+																		  *
+	What are the top 5 brands by receipts scanned for most recent month?  *
+***************************************************************************
+
+Answer: The below SQL statement will get the top 5 brands based on the 
+		number of receipts scanned from the beginning of the last month
+		to the start of the current month. 
+		
+		*N.B. I'm assuming the most recent month refers to the 
+		whole of the previous month, rather than this current month. 
+
+SELECT TOP 5 b._id, b.name, COUNT(p.receiptID) AS pcount
+FROM brands AS b
+INNER JOIN purchase_fact AS p
+ON p.brandID = b._id
+INNER JOIN receipts AS r
+ON r._id = p.receiptID
+WHERE r.dateScanned >= DATEADD(M, DATEDIFF(M, 0, GETDATE())-1, 0)
+AND   r.dateScanned < DATEADD(M, DATEDIFF(M, 0, GETDATE()), 0)
+ORDER BY pcount DESC;
+
+***********************************************************************
+Question 2:															  *
+																	  *
+	How does the ranking of the top 5 brands by receipts scanned for  *
+	the recent month compare to the ranking for the previous month?	  *
+***********************************************************************
+
+Answer 2: Run the SQL statement from Question 1, compare to the below statement:
+
+SELECT TOP 5 b._id, b.name, COUNT(p.receiptID) AS pcount
+FROM brands AS b
+INNER JOIN purchase_fact AS p
+ON p.brandID = b._id
+INNER JOIN receipts AS r
+ON r._id = p.receiptID
+WHERE r.dateScanned >= DATEADD(M, DATEDIFF(M, 0, GETDATE())-2, 0)
+AND   r.dateScanned < DATEADD(M, DATEDIFF(M, 0, GETDATE())-1, 0)
+ORDER BY pcount DESC;
+
+*****************************************************************************
+Question 3:															  		*
+																			*
+	When considering average spend from receipts with 						*
+	'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?	*
+*****************************************************************************
+
+Answer 3: Create 2 SQL statements, one for 'Accepted' and one 'Rejected'.
+		  Get the average spend for each. 
+		  Compare the results of the 2 SQL statements. 
+
+SELECT AVG(totalSpent)
+FROM receipts
+WHERE rewardsReceiptStatus = 'Accepted';
+
+SELECT AVG(totalSpent)
+FROM receipts
+WHERE rewardsReceiptStatus = 'Rejected';
+
+
+***********************************************************************
+Question 4:															  *
+																	  *
+	When considering total number of items purchased from receipts 	  *
+	with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, 		  *
+	which is greater?												  *
+***********************************************************************
+
+Answer 4: Similar to answer 3, create 2 SQL statements for
+		  'Accepted' and 'Rejected', get the sum of 
+		  total items for each, compare the results.
+		  
+		 
+SELECT SUM(purchasedItemCount)
+FROM receipts
+WHERE rewardsReceiptStatus = 'Accepted';
+
+SELECT SUM(purchasedItemCount)
+FROM receipts
+WHERE rewardsReceiptStatus = 'Rejected';
+
+
+***********************************************************************
+Question 5:															  *
+																	  *
+	Which brand has the most spend among users who 					  *
+	were created within the past 6 months?							  *
+***********************************************************************
+
+Answer: Similar select to question 1 & 2, 
+
+SELECT TOP 1 b._id, b.name, SUM(r.totalSpent) AS rsum
+FROM brands as b
+INNER JOIN purchase_fact AS p
+ON b._id = p.brandID
+INNER JOIN users AS u
+ON p.userID = u._id
+INNER JOIN receipts AS r
+ON p.receiptID = r._id
+WHERE u.createdDate >= DATEADD(M, DATEDIFF(M, 0, GETDATE())-6, 0)
+ORDER BY rsum DESC; 
+
+
+***********************************************************************
+Question 6:															  *
+																	  *
+	Which brand has the most transactions among users 				  *
+	who were created within the past 6 months?						  *
+***********************************************************************
+
+SELECT TOP 1 b._id, b.name, COUNT(p.receiptID) AS pcount
+FROM brands as b
+INNER JOIN purchase_fact AS p
+ON b._id = p.brandID
+INNER JOIN users AS u
+ON p.userID = u._id
+INNER JOIN receipts AS r
+ON p.receiptID = r._id
+WHERE u.createdDate >= DATEADD(M, DATEDIFF(M, 0, GETDATE())-6, 0)
+ORDER BY pcount DESC; 
